@@ -1,0 +1,23 @@
+version: '3.4'
+
+services:
+  mongo:
+    container_name: mongo
+    hostname: mongo
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    # Initialises single-node replica set (required to test multi-document transaction support)
+    healthcheck:
+      test: |
+        test $$(mongosh --quiet --eval "try { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo' }] }).ok } catch (_) { rs.status().ok }") -eq 1
+      interval: 10s
+      start_period: 30s
+    command: "--bind_ip_all --replSet rs0"
+
+  useservicescopeandpaging:
+    image: ${DOCKER_REGISTRY-}useservicescopeandpaging
+    build:
+      context: .
+      dockerfile: UseServiceScopeAndPaging/Dockerfile
